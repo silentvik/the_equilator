@@ -16,5 +16,5 @@ But it still works very fast and can be useful for creating a poker engine using
 <ul>2. You can get not only the total equity of the ranges, but the equity of absolutely all hands in the range separately.</ul>
 <ul>3. Calculations with weigths are 3x+ times faster than Equilab from pokerstrategy.com (even w/o weigths)</ul>
 <ul>4. numba nJIT optimizes the code for the specific processor on which it runs, often surpasses the speed of python C-function calls. </ul>
-If you want to use this software for commercial purposes (to create a solver / engine / bot), I would prefer to be informed at silentvik@gmail.com.<br>
+If you want to use this software for commercial purposes (to create a solver / engine / bot), I would prefer to be informed at silentvik@yahoo.com.<br>
 In addition, I can help (all of the above has already been created, also obviously not the most optimized version is presented here).
