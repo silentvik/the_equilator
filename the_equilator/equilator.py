@@ -9,6 +9,14 @@ from funcs_jit import (current_strength_of_this_hand, find_each_equity_turn,
 
 
 class Equilator:
+    """
+        Contains functions for equity calculations.
+    """
+
+    # Note2: This is my first created class in my life with very few refactoring.
+    # I apologize for many architectural and other mistakes. This is an example of bad but working code.
+    # Now it's impossible to watch without tears, but it's also a pity to delete.
+
     all_cards = DataGetter.get_all_cards_list()
     all_paired_combos = DataGetter.get_all_paired_combos()
     full_preflop_matrix = DataGetter.load_preflop_matrix()
@@ -17,7 +25,11 @@ class Equilator:
     @njit(cache=True)
     def make_equity_arrays(stage, OOP_range_array, IP_range_array, board):
         """
-            Here we make arrays of equity / fill them up
+            Here we make arrays of equity / fill them up.
+            Postflop only.
+            Each stage needs its own approach.
+            Contains alot of repetions,
+            but splitting the function into smaller ones leads to faster compilation and slower execution
         """
 
         range_len_OOP = range(len(OOP_range_array))
@@ -25,6 +37,7 @@ class Equilator:
 
         # flop
         if stage == 1:
+            # 1. INITIALIZATION
             turns = np.ones((49, 2), dtype=uint8)
             flops = np.empty((3), dtype=uint8)
             all_cards_array_with_weigth = make_all_board_possible_cards_array()
@@ -41,7 +54,6 @@ class Equilator:
             )
 
             index = 0
-            # print('board = ', board[0], board[1], board[2])
             for i in range(52):
                 new_card = all_cards_array_with_weigth[i][0]
                 if (
@@ -109,9 +121,11 @@ class Equilator:
                 data_massive_small[4][2],
             ) = (board_card1, board_card2, board_card3)
 
-            # calculate strength of each hand
+            # 2. calculate strength of each hand
+
             for k2 in range(2):
-                # print(' CURRENT player = ', k2)
+                # k2 number is a numeric player position equivalent.
+                # Used to define a player 0 or player 1
                 len_r_a = len(OOP_range_array)
                 len_ops_r_a = len(IP_range_array)
                 range_array = OOP_range_array
@@ -180,21 +194,16 @@ class Equilator:
                                 rivers_strength[j][k][i] = str1
 
                         else:
-                            # if j==9 and i==5:
-                            # print('     FD on this turn!')
                             old_river_rank = 0
                             str1 = 0
                             for k in range(48):
                                 river_card = rivers[j][k][0]
-                                # print('         k = ', k, ' river_Card = ', river_card)
                                 if river_card == h_card1 or river_card == h_card2:
                                     rivers_strength[j][k][i] = 0
                                     continue
                                 river_suit = river_card - int(river_card / 10) * 10
                                 if river_suit == fd_suit or fd_cards_count > 4:
                                     data_massive_small[4][4] = river_card
-                                    # print('             data_massive_small[4] = ', data_massive_small[4], river_card)
-                                    # return
                                     str2 = current_strength_of_this_hand(
                                         data_massive_small
                                     )
@@ -203,14 +212,14 @@ class Equilator:
 
                                 river_rank = int(river_card / 10) * 10
                                 if river_rank == old_river_rank:
-                                    # print('             same str1')
                                     rivers_strength[j][k][i] = str1
                                     continue
                                 data_massive_small[4][4] = river_rank
                                 old_river_rank = river_rank
                                 str1 = current_strength_of_this_hand(data_massive_small)
-                                # print('             str1 = ', str1)
                                 rivers_strength[j][k][i] = str1
+
+            # 3. CALC EQUITY
 
             find_each_equity_turn(
                 OOP_range_array,
@@ -229,6 +238,7 @@ class Equilator:
 
         # turn
         elif stage == 2:
+            # 1. INITIALIZATION
             board_card1, board_card2, board_card3 = (
                 int(board[0]),
                 int(board[1]),
@@ -282,9 +292,10 @@ class Equilator:
                 data_massive_small[4][2],
             ) = (board_card1, board_card2, board_card3)
 
-            # записали силу каждой руки в массив
+            # 2. calculate strength of each hand
             for k2 in range(2):
-                # print(' CURRENT player = ', k2)
+                # k2 number is a numeric player position equivalent.
+                # Used to define a player 0 or player 1
                 len_r_a = len(OOP_range_array)
                 len_ops_r_a = len(IP_range_array)
                 range_array = OOP_range_array
@@ -371,7 +382,7 @@ class Equilator:
                                 str1 = current_strength_of_this_hand(data_massive_small)
                                 rivers_strength[j][k][i] = str1
 
-            # find eq here
+            # 3. CALC EQUITY
             range_eq = 0
             range_games = 0
             range_48 = range(48)
@@ -414,6 +425,7 @@ class Equilator:
 
         # river
         else:
+            # 1. INITIALIZATION
             board_card1, board_card2, board_card3, board_card4, board_card5 = (
                 int(board[0]),
                 int(board[1]),
@@ -438,8 +450,11 @@ class Equilator:
                 data_massive_small[4][3],
                 data_massive_small[4][4],
             ) = (board_card1, board_card2, board_card3, board_card4, board_card5)
-            # calculate hands strength
+
+            # 2. calculate strength of each hand
             for k2 in range(2):
+                # k2 number is a numeric player position equivalent.
+                # Used to define a player 0 or player 1
                 len_r_a = len(OOP_range_array)
                 len_ops_r_a = len(IP_range_array)
                 range_array = OOP_range_array
@@ -457,6 +472,7 @@ class Equilator:
                     current_strength = current_strength_of_this_hand(data_massive_small)
                     rivers_strength[0][0][i] = current_strength
 
+            # 3. CALC EQUITY
             range_eq = 0
             range_games = 0
             for i in range_len_OOP:

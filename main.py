@@ -3,9 +3,9 @@ from time import time
 from the_equilator.eqmanager import EqManager
 
 if __name__ == '__main__':
+    # more information in EqManager.__doc__
 
     # setting player ranges
-    # more information in EqManager.__doc__
 
     range_1 = (
         "22+,AKs"
@@ -26,7 +26,7 @@ if __name__ == '__main__':
     # or set values after init eqmanager_inst
     if False:
         eqmanager_inst.player2_range = 'KK,99'  # range can be set here
-        eqmanager_inst.board = '2h,3d,4c'  # board can be set here
+        eqmanager_inst.board = '2h,3d,4c,5s'  # board can be set here
 
     eqmanager_inst.print_current_values()
 

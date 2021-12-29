@@ -10,8 +10,9 @@ from funcs_py import range_converter
 
 class PlayersRange:
     """
-        goal: to turn the entered string into a range for calculations
+        Represents the ranges of players in a form suitable for calculations.
     """
+
     input_value = None
     _range_list = None
     _transformed_range = None
@@ -19,44 +20,42 @@ class PlayersRange:
     _adapted_range = None
 
     def __init__(self, input_value):
+        """
+            Sets the required attributes
+        """
+
         self.input_value = input_value
         if input_value:
             if type(input_value) != str:
                 raise ValueError("Player's range input must be a string")
+
             if '(' in input_value or '[' in input_value:  # weighted input
-                self._range_list = input_value[1:-1].split(',')
-                for i, hand in enumerate(self._range_list):
-                    hand_wo_w = ''
-                    for symbol in hand:
-                        if symbol == '(':
-                            break
-                        hand_wo_w += symbol
-                    self._range_list[i] = hand_wo_w
+                self._set_range_list_weighted(input_value)
                 self._transformed_range = convert_range_from_text_to_weighted_array(input_value)
             else:
-                final_char_list = []
-                for combo in range_converter(input_value):
-                    if combo in Equilator.all_paired_combos:
-                        final_char_list.append(combo)
-                        continue
-                    print(
-                        f'PlayersRange WARNING! Input is not fully correct!\n     combo {combo}'
-                        f' is not in standart list, list = {Equilator.all_paired_combos}'
-                    )
-                self._range_list = final_char_list
+                self._set_range_list_not_weighted(input_value)
                 self._transformed_range = convert_char_to_float_array(np.array(self._range_list))
-        else:
-            self._range_list = None
-            self._transformed_range = None
 
     def adapt_for_preflop(self):
+        """
+            Configure PlayersRange instance for preflop equity calculations.
+        """
+
         self._adapted_range_list = Equilator.convert_to_range_list(self._transformed_range)
         self._adapted_range = self._transformed_range
 
     def adapt_for_postflop(self, board_array):
+        """
+            Configure PlayersRange instance for postflop equity calculations.
+        """
+
         self._adapted_range = Equilator.recalculate_range(self._transformed_range, board_array)
 
     def __str__(self):
+        """
+            Returns readable info about the instance.
+        """
+
         len_list = 0
         if type(self._range_list) == list:
             len_list = len(self._range_list)
@@ -87,11 +86,44 @@ class PlayersRange:
         )
         return text
 
+    def _set_range_list_weighted(self, input_value):
+        """
+            Converts weighted input to list of combos and set it to self._range_list.
+            Returns None
+        """
+
+        self._range_list = input_value[1:-1].split(',')  # cut off the brackets
+        for i, hand in enumerate(self._range_list):
+            hand_wo_w = ''
+            for symbol in hand:
+                if symbol == '(':
+                    break
+                hand_wo_w += symbol
+            self._range_list[i] = hand_wo_w
+
+    def _set_range_list_not_weighted(self, input_value):
+        """
+            Converts string input to list of valid combos and set it to self._range_list.
+            Returns None
+        """
+
+        final_char_list = []
+        for combo in range_converter(input_value):
+            if combo in Equilator.all_paired_combos:
+                final_char_list.append(combo)
+                continue
+            print(
+                f'PlayersRange WARNING! Input is not fully correct!\n     combo {combo}'
+                f' is not in standart list, list = {Equilator.all_paired_combos}'
+            )
+        self._range_list = final_char_list
+
 
 class Board:
     """
-        goal: to turn the entered string into a valid board for calculations
+        Represents the board(flop/turn/river) in a form suitable for calculations.
     """
+
     input_value = None
     board = []
     _stage = 0
@@ -136,6 +168,10 @@ class Board:
             self._transformed_board = None
 
     def __str__(self):
+        """
+            Returns readable info about the instance.
+        """
+
         text = (
             f'       class {self.__class__.__name__}'
             f'\n        input = "{self.input_value}"'
@@ -154,19 +190,24 @@ class EqManager:
         Input board as list like ["Qd", "Jc", "5s"] or like string as "Qd, Jc, 5s" or w/o spaces "Qd,Jc,5s"
         Method self.get_equity - to evaluate ranges. Returns an equity.
 
-        Features:
-                input "22+" - means all possible pockets from 22 to AA.
-                77-22 - all possible pockets from 22 to 77, include both 22 and 77
-                22-77 - its WRONG. you will get an error
-                A2s+ or A8s-A3s - the same as pockets
-                A2o+ or A8o-A3o - the same as pockets and suited cards
-                82s+ - will give you all combos of 82s, 83s .. to 87s.
-                87s+ - will NOT give you all higher connectors. You will get 4 combos of 87s.
+        Input features:
+            "22" - all 6 combos of a pair of twos
+            "22+" - means all possible pockets from AA to 22.
+            "77-22" - all possible pockets from 77 to 22, include both 22 and 77
+            "22-77" - its WRONG. you will get an error
 
-                "any two" or "any2" - input all combos
-                "suit" - input only all suited combos
-                "offsuit" - input only all offsuited combos
-                "pockets" or "any pair" - input only all pockets
+            "A2s" - A2 suited, combos: Ah2h, Ad2d, Ac2c, As2s
+            "A2s+" - all possible suited Aces: Ah2h, Ad2d...AcKc, AsKs.
+            "A8s-A3s" - the same as pockets, range between card ranks ("s" here means "suited", not spades)
+
+            "A2o+" or "A8o-A3o" - the same as pockets and suited cards, but unsuited variant
+            "82s+" - will give you all combos 82s, 83s .. to 87s.
+            "87s+" - will NOT give you all higher connectors. You will get 4 combos of 87s.
+
+            "any two" or "any2" - input all combos
+            "suit" - input only all suited combos
+            "offsuit" - input only all offsuited combos
+            "pockets" or "any pair" - input only all pockets (similar to "22+")
 
         Additional info:
             1. EqManager.prepare_ranges() will return False if:
@@ -184,15 +225,18 @@ class EqManager:
                 combination with name "%&%^&??" was ignored
 
             3.  You can ALSO use weighted input:
-                self.range1 = "[2h2d(8734),4h4c(69556),5h5c(34132),6d6s(3740),7d7c(28040)]"
+                self.player1_range = "[2h2d(8734),4h4c(69556),5h5c(34132),6d6s(3740),7d7c(28040)]"
                 here you cant use format "22+" or "suit"
                 every combination MUST have a full name like "2h2d" and weight, without spaces.
 
             4. If the weight was not set, the weight is set to 1.
 
-            5. If enter a weight for a hand => all hands in a range must be entered with weights
+            5. If enter a weight for a hand => all hands in a range must be entered with weights:
+                wrong   -> eqmanager_instance.player1_range = "33-22, AsKd(54.5)"
+                correct -> eqmanager_instance.player1_range = "[3h3d(25),3h3c(117)...AsKd(54.5)]"
 
         Example of usage class EqManager:
+            code1:
                 eqmanager_instance = EqManager()
                 eqmanager_instance.player1_range = "22+, AhKd, 76s, J8s-J2s"
                 eqmanager_instance.player2_range = "TT-55, 22, AdKc, 8s7s, 7d6d, 7h6h, 7s6s, 4d3d, 4h3h"
@@ -200,12 +244,15 @@ class EqManager:
 
                 eq = eq_instance.get_equity()
                 print(eq)
-            or:
+            code2:
+                eqmanager_instance = EqManager()
+                # ... input ranges
+
                 prepared = eqmanager_instance.prepare_ranges()
                 if not prepared:
                     eqmanager_instance.print_current_values()
                 else:
-                    m1,m2 = eqmanager_instance.get_paired_matrix()
+                    pm1, pm2 = eqmanager_instance.get_paired_matrix()
     '''
 
     prints_enabled = False
@@ -246,8 +293,10 @@ class EqManager:
 
     def refresh_properties(self):
         """
-            Set properties to their defaults. Now we need preparation.
+            Set properties to their defaults.
+            After this process, preparation is needed again.
         """
+
         self._equity = None
         self._prepared = False
         self._main_paired_matrix = None
@@ -289,6 +338,7 @@ class EqManager:
             Create playability matrix.
             Returns True if the preparation was successful, False otherwise.
         """
+
         self._prepared = False
         stage = self.board._stage
         player_1_range_array = self.player1_range._transformed_range
@@ -336,6 +386,7 @@ class EqManager:
             if stage is flop or turn -> side_paired_matrix can be added,
             then calculates equity. No return.
         '''
+
         stage = self.board._stage
         board = self.board._transformed_board
         OOP_range_array = self.player1_range._adapted_range
@@ -368,6 +419,7 @@ class EqManager:
         """
             Prepare ranges, then make equity matrices.
         """
+
         if not self.prepare_ranges():
             raise EquilatorError('Cant equilate. Ranges are not prepared!')
         self.equilate_and_make()

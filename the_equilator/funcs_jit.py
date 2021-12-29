@@ -20,6 +20,7 @@ def from_string_to_numbers(string):
         Available for nJIT.
         If will see a point in the text = returns float, else = int.
     """
+
     number = 0.0
     before_point_count = 0
     after_point_count = 0
@@ -318,6 +319,10 @@ def jcard_strength(card):
 
 @njit(cache=True)
 def convert_range_from_text_to_weighted_array(weighted_range_text):
+    """
+        Returns an array of numeric hands with weights from input
+    """
+
     player_range_array = np.zeros((1326, 3), dtype=float32)
     text_temp = ""
     hand_number = 0
@@ -358,6 +363,7 @@ def make_all_board_possible_cards_array():
     """
         creates 52-cards array and set default weigth, returns it
     """
+
     all_cards_array_with_weigth = np.ones((52, 4), dtype=uint16)
     for i in range(13):
         for j in range(4):
@@ -625,17 +631,17 @@ def find_each_equity_turn(
     hero_rivers_strength,
     opps_rivers_strength,
     basic_turns_paired_matrix,
-    turns,
-    basic_flop_paired_matrix,
 ):
-    # print(' IN EQUILATOR')
+    """
+        Calculates an equity on every turn and writes it.
+        Returns None
+    """
+
     turns_count = len(basic_turns_paired_matrix)
     range_len_hr = range(len(hero_range_array))
     range_len_or = range(len(opps_range_array))
     range_48 = range(48)
     for k in range(turns_count):
-        # total_range_eq = 0
-        # total_games = 0
         for i in range_len_hr:
             for j in range_len_or:
                 if basic_turns_paired_matrix[k][i][j] < 0:
@@ -710,6 +716,11 @@ def vectorized_summ_matrix(a, b):
 
 @njit(cache=True)
 def convert_char_to_float_array(char_array):
+    """
+        Converts array full of hand names to numeric array with default weight = 1.
+        Returns a new array
+    """
+
     float_array = np.empty((len(char_array), 3), dtype=float32)
     for i in range(len(char_array)):
         card1, card2 = (
