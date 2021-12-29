@@ -24,7 +24,7 @@ if __name__ == '__main__':
     )
 
     # or set values after init eqmanager_inst
-    if False:
+    if False:  # change to True
         eqmanager_inst.player2_range = 'KK,99'  # range can be set here
         eqmanager_inst.board = '2h,3d,4c,5s'  # board can be set here
 
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     print(f'\nEQ RESULT = {eq}\n')
 
     # get matrices
-    if False:
+    if False:  # change to True
         # in reality (when you want to create a poker solver/engine)
         # you no need an average equity of ranges. All you need is:
 
